@@ -7,7 +7,10 @@ the information.
 
 ## Installation
 
-Copy the script in a directory in the `$PATH`.
+Copy the script in a directory and point to it in your keybind.
+
+Arch users can install the script from the
+[AUR](https://aur.archlinux.org/packages/pass-autotype/)
 
 ## Requirements
 
