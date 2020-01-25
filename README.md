@@ -11,6 +11,7 @@ Copy the script in a directory in the `$PATH`.
 
 ## Requirements
 
+- dmenu
 - pass
 - ydotool
 - pass-otp (optional for otp)
