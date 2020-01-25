@@ -9,6 +9,12 @@ the information.
 
 Copy the script in a directory in the `$PATH`.
 
+## Requirements
+
+- pass
+- ydotool
+- pass-otp (optional for otp)
+
 ## Usage
 
 Add a keybind to your Window Manager configuration.
