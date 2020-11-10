@@ -16,6 +16,8 @@ else
     exit 1
 fi
 
+NOTIFY=$(command -v notify-send)
+
 STORE=${PASSWORD_STORE_DIR:-$HOME/.password-store}
 PASSFILE=$(find "$STORE" -type f -name '*.gpg' |
     sed -e "s|$STORE/||g" -e 's|.gpg$||g' | dmenu -i)
@@ -34,6 +36,7 @@ OPTS["Password"]="$(echo "$PASSDATA" | head -n 1)"
 # Type the password if it's the only line in the file
 if [[ $(echo "$PASSDATA" | wc -l) -eq 1 ]]; then
     $CMD type "${OPTS["Password"]}"
+    $NOTIFY $0 "Inserted password for $PASSFILE"
     exit 0
 fi
 
@@ -69,11 +72,14 @@ fi
 case "$RESP" in
 Autotype)
     $CMD type "${OPTS["Username"]}" && $CMD key Tab && $CMD type "${OPTS["Password"]}" && $CMD key $RTN
+    $NOTIFY $0 "Inserted username and password for $PASSFILE"
     ;;
 Otpauth)
     $CMD type "$(pass otp "$PASSFILE")"
+    $NOTIFY $0 "Inserted otp for $PASSFILE"
     ;;
 *)
     $CMD type "${OPTS["$RESP"]}"
+    $NOTIFY $0 "Inserted $RESP for $PASSFILE"
     ;;
 esac
