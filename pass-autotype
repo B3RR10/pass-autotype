@@ -32,9 +32,10 @@ declare -a KEYS
 declare -A OPTS
 KEYS+=("Password")
 OPTS["Password"]="$(echo "$PASSDATA" | head -n 1)"
+PASSDATA="$(echo "$PASSDATA" | tail -n +2)"
 
 # Type the password if it's the only line in the file
-if [[ $(echo "$PASSDATA" | wc -l) -eq 1 ]]; then
+if [[ -z $PASSDATA ]]; then
     $CMD type "${OPTS["Password"]}"
     $NOTIFY $0 "Inserted password for $PASSFILE"
     exit 0
