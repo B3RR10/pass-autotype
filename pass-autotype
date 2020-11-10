@@ -7,8 +7,10 @@
 
 if command -v ydotool > /dev/null; then
     CMD=$(which ydotool)
+    RTN="Enter"
 elif command -v xdotool > /dev/null; then
     CMD=$(which xdotool)
+    RTN="Return"
 else
     echo "Please install either ydotool or xdotool."
     exit 1
@@ -66,7 +68,7 @@ fi
 
 case "$RESP" in
 Autotype)
-    $CMD type "${OPTS["Username"]}" && $CMD key Tab && $CMD type "${OPTS["Password"]}" && $CMD key Enter
+    $CMD type "${OPTS["Username"]}" && $CMD key Tab && $CMD type "${OPTS["Password"]}" && $CMD key $RTN
     ;;
 Otpauth)
     $CMD type "$(pass otp "$PASSFILE")"
