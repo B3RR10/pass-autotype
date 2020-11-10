@@ -5,6 +5,15 @@
 # which works on wayland without additional configuration. It uses ydotool to
 # type the information.
 
+if command -v ydotool > /dev/null; then
+    CMD=$(which ydotool)
+elif command -v xdotool > /dev/null; then
+    CMD=$(which xdotool)
+else
+    echo "Please install either ydotool or xdotool."
+    exit 1
+fi
+
 STORE=${PASSWORD_STORE_DIR:-$HOME/.password-store}
 PASSFILE=$(find "$STORE" -type f -name '*.gpg' |
     sed -e "s|$STORE/||g" -e 's|.gpg$||g' | dmenu -i)
@@ -22,7 +31,7 @@ OPTS["Password"]="$(echo "$PASSDATA" | head -n 1)"
 
 # Type the password if it's the only line in the file
 if [[ $(echo "$PASSDATA" | wc -l) -eq 1 ]]; then
-    ydotool type "${OPTS["Password"]}"
+    $CMD type "${OPTS["Password"]}"
     exit 0
 fi
 
@@ -57,12 +66,12 @@ fi
 
 case "$RESP" in
 Autotype)
-    ydotool type "${OPTS["Username"]}" && ydotool key Tab && ydotool type "${OPTS["Password"]}" && ydotool key Enter
+    $CMD type "${OPTS["Username"]}" && $CMD key Tab && $CMD type "${OPTS["Password"]}" && $CMD key Enter
     ;;
 Otpauth)
-    ydotool type "$(pass otp "$PASSFILE")"
+    $CMD type "$(pass otp "$PASSFILE")"
     ;;
 *)
-    ydotool type "${OPTS["$RESP"]}"
+    $CMD type "${OPTS["$RESP"]}"
     ;;
 esac
