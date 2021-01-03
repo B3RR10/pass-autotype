@@ -18,13 +18,20 @@ fi
 
 NOTIFY=$(command -v notify-send)
 
+CACHEFILE=${XDG_CACHE_HOME:-$HOME/.cache}/pass-autotype
+[[ -f "$CACHEFILE" ]] && LASTUSED="$(tail -n 1 $CACHEFILE)\n"
+
 STORE=${PASSWORD_STORE_DIR:-$HOME/.password-store}
-PASSFILE=$(find "$STORE" -type f -name '*.gpg' |
-    sed -e "s|$STORE/||g" -e 's|.gpg$||g' | dmenu -i)
+PASSFILES=$(find "$STORE" -type f -name '*.gpg' |
+    sed -e "s|$STORE/||g" -e 's|.gpg$||g')
+
+PASSFILE=$(echo -e "$LASTUSED$PASSFILES" | dmenu -i)
 
 if [[ -z $PASSFILE ]]; then
     exit 0
 fi
+
+echo $PASSFILE > $CACHEFILE
 
 PASSDATA="$(PASSWORD_STORE_DIR=$STORE pass "$PASSFILE")"
 
