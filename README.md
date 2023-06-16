@@ -1,8 +1,8 @@
 # pass-autotype
 
 This script is based on the fzf-pass script by ReekyMarko
-https://git.reekynet.com/ReekyMarko/fzf-pass/ but using dmenu instead of fzf,
-which works on wayland without additional configuration. It uses ydotool to type
+https://git.reekynet.com/ReekyMarko/fzf-pass/ but using fuzzel instead of fzf,
+which works on wayland without additional configuration. It uses wtype to type
 the information.
 
 ## Installation
@@ -14,9 +14,9 @@ Arch users can install the script from the
 
 ## Requirements
 
-- dmenu
+- fuzzel
 - pass
-- ydotool
+- wtype
 - pass-otp (optional for otp)
 
 ## Usage

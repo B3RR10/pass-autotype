@@ -1,50 +1,58 @@
 #!/usr/bin/env bash
 
-# dmenu-pass This script is based on the fzf-pass script by ReekyMarko
-# https://git.reekynet.com/ReekyMarko/fzf-pass/ but using dmenu instead of fzf,
-# which works on wayland without additional configuration. It uses ydotool to
+# pass-autotype This script is based on the fzf-pass script by ReekyMarko
+# https://git.reekynet.com/ReekyMarko/fzf-pass/ but using fuzzel instead of fzf,
+# which works on wayland without additional configuration. It uses wtype to
 # type the information.
 
-if command -v ydotool > /dev/null; then
-    CMD=$(which ydotool)
-    RTN="Enter"
-elif command -v xdotool > /dev/null; then
-    CMD=$(which xdotool)
-    RTN="Return"
-else
-    echo "Please install either ydotool or xdotool."
+PROGNAME=$0
+
+if ! command -v wtype > /dev/null; then
+    echo "Please install wtype."
+    exit 1
+fi
+if ! command -v fuzzel > /dev/null; then
+    echo "Please install fuzzel."
     exit 1
 fi
 
-NOTIFY=$(command -v notify-send)
+function type() {
+    $(command -v wtype) -s 100 "$@"
+}
+function menu() {
+    $(command -v fuzzel) --dmenu "$@"
+}
+function notify() {
+    $(command -v notify-send) $PROGNAME "$@"
+}
 
-CACHEFILE=${XDG_CACHE_HOME:-$HOME/.cache}/pass-autotype
-[[ -f "$CACHEFILE" ]] && LASTUSED="$(tail -n 1 $CACHEFILE)\n"
+cache_file=${XDG_CACHE_HOME:-$HOME/.cache}/pass-autotype
+[[ -f "$cache_file" ]] && last_used="$(tail -n 1 $cache_file)\n"
 
-STORE=${PASSWORD_STORE_DIR:-$HOME/.password-store}
-PASSFILES=$(find "$STORE" -type f -name '*.gpg' |
-    sed -e "s|$STORE/||g" -e 's|.gpg$||g')
+password_store_dir=${PASSWORD_STORE_DIR:-$HOME/.password-store}
+pass_files=$(find "$password_store_dir" -type f -name '*.gpg' |
+    sed -e "s|$password_store_dir/||g" -e 's|.gpg$||g')
 
-PASSFILE=$(echo -e "$LASTUSED$PASSFILES" | dmenu -i)
+selected_file=$(echo -e "$last_used$pass_files" | menu)
 
-if [[ -z $PASSFILE ]]; then
+if [[ -z $selected_file ]]; then
     exit 0
 fi
 
-echo $PASSFILE > $CACHEFILE
+echo $selected_file > $cache_file
 
-PASSDATA="$(PASSWORD_STORE_DIR=$STORE pass "$PASSFILE")"
+file_data="$(PASSWORD_STORE_DIR=$password_store_dir pass "$selected_file")"
 
 declare -a KEYS
 declare -A OPTS
 KEYS+=("Password")
-OPTS["Password"]="$(echo "$PASSDATA" | head -n 1)"
-PASSDATA="$(echo "$PASSDATA" | tail -n +2)"
+OPTS["Password"]="$(echo "$file_data" | head -n 1)"
+file_data="$(echo "$file_data" | tail -n +2)"
 
 # Type the password if it's the only line in the file
-if [[ -z $PASSDATA ]]; then
-    $CMD type "${OPTS["Password"]}"
-    $NOTIFY $0 "Inserted password for $PASSFILE"
+if [[ -z $file_data ]]; then
+    type "${OPTS["Password"]}"
+    notify "Inserted password for $selected_file"
     exit 0
 fi
 
@@ -55,22 +63,22 @@ pattern_option="^([^:]+):\s*(.+)"
 pattern_user="^[Uu]ser(name)?"
 while IFS= read -r line; do
     if [[ "$line" =~ $pattern_option ]]; then
-        KEY="${BASH_REMATCH[1]^}"
-        VALUE="${BASH_REMATCH[2]}"
-        if [[ "$KEY" =~ $pattern_user ]]; then
-            KEY="Username"
-            KEYS=("$KEY" "${KEYS[@]}")
+        key="${BASH_REMATCH[1]^}"
+        value="${BASH_REMATCH[2]}"
+        if [[ "$key" =~ $pattern_user ]]; then
+            key="Username"
+            KEYS=("$key" "${KEYS[@]}")
             KEYS=("Autotype" "${KEYS[@]}")
         else
-            KEYS+=("$KEY")
+            KEYS+=("$key")
         fi
-        OPTS["$KEY"]="$VALUE"
+        OPTS["$key"]="$value"
     fi
-done <<<"$PASSDATA"
+done <<<"$file_data"
 
 RESP=$(
     IFS=$'\n'
-    echo "${KEYS[*]}" | dmenu -i
+    echo "${KEYS[*]}" | menu
 )
 
 if [[ -z $RESP ]]; then
@@ -79,15 +87,15 @@ fi
 
 case "$RESP" in
 Autotype)
-    $CMD type "${OPTS["Username"]}" && $CMD key Tab && $CMD type "${OPTS["Password"]}" && $CMD key $RTN
-    $NOTIFY $0 "Inserted username and password for $PASSFILE"
+    type "${OPTS["Username"]}" && type -k Tab && type "${OPTS["Password"]}" && type -k "Enter"
+    notify "Inserted username and password for $selected_file"
     ;;
 Otpauth)
-    $CMD type "$(pass otp "$PASSFILE")"
-    $NOTIFY $0 "Inserted otp for $PASSFILE"
+    type "$(pass otp "$selected_file")"
+    notify "Inserted otp for $selected_file"
     ;;
 *)
-    $CMD type "${OPTS["$RESP"]}"
-    $NOTIFY $0 "Inserted $RESP for $PASSFILE"
+    type "${OPTS["$RESP"]}"
+    notify "Inserted $RESP for $selected_file"
     ;;
 esac
